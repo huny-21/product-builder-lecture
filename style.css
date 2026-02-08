@@ -1,15 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
 :root {
-  --bg: #f2f0ea;
-  --bg-deep: #e5e0d5;
+  --bg: #f1f2ec;
+  --bg-deep: #e2e6d7;
   --panel: #ffffff;
   --ink: #1f1f1f;
-  --muted: #6b6b63;
-  --accent: #c26d45;
-  --accent-2: #2e6f6b;
-  --line: #d8d0c4;
-  --shadow: 0 20px 40px rgba(32, 24, 14, 0.12);
+  --muted: #6a6f5f;
+  --accent: #6b7f3a;
+  --accent-2: #3b5d2a;
+  --line: #d3d8c8;
+  --shadow: 0 20px 40px rgba(32, 35, 20, 0.12);
 }
 
 * {
@@ -20,7 +20,7 @@
 
 body {
   font-family: 'IBM Plex Sans KR', sans-serif;
-  background: radial-gradient(circle at 20% 20%, #f7efe0, #efe7d9 45%, #e8e0d0 100%);
+  background: radial-gradient(circle at 20% 20%, #f6f8ef, #eef1e6 45%, #e6eadc 100%);
   color: var(--ink);
   min-height: 100vh;
 }
@@ -32,8 +32,8 @@ body {
 }
 
 .sidebar {
-  background: linear-gradient(160deg, #1f1c16, #2a2620 55%, #1b1915 100%);
-  color: #f7f2e8;
+  background: linear-gradient(160deg, #1f2416, #2b3320 55%, #1c2115 100%);
+  color: #f4f6ea;
   padding: 28px 24px;
   display: flex;
   flex-direction: column;
@@ -50,7 +50,7 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #c26d45;
+  background: #6b7f3a;
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -85,8 +85,8 @@ body {
 
 .nav-item:hover,
 .nav-item.is-active {
-  background: rgba(194, 109, 69, 0.18);
-  border-color: rgba(194, 109, 69, 0.5);
+  background: rgba(107, 127, 58, 0.18);
+  border-color: rgba(107, 127, 58, 0.5);
 }
 
 .sidebar-footer {
@@ -190,7 +190,7 @@ body {
 }
 
 .card.highlight {
-  background: linear-gradient(135deg, #f5e7d6, #f2d3b8);
+  background: linear-gradient(135deg, #eef2d9, #dfe8c3);
 }
 
 .metric {
@@ -268,7 +268,7 @@ body {
 
 .primary {
   background: var(--accent);
-  color: #fff7f0;
+  color: #f7fbf0;
 }
 
 .ghost {
@@ -339,7 +339,7 @@ body {
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(46, 111, 107, 0.15);
+  background: rgba(59, 93, 42, 0.15);
   color: var(--accent-2);
   font-size: 12px;
 }
