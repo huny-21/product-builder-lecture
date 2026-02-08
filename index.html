@@ -1,14 +1,411 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+  <title>공익법인 운영 관리 CMS</title>
+  <link href="/style.css" rel="stylesheet">
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+  <div id="app" class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">PI</div>
+        <div>
+          <div class="brand-title">Public Interest Ops</div>
+          <div class="brand-sub">운영 관리 CMS</div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button class="nav-item is-active" data-target="dashboard">대시보드</button>
+        <button class="nav-item" data-target="orgs">법인 관리</button>
+        <button class="nav-item" data-target="expenses">지출 3단계 분류</button>
+        <button class="nav-item" data-target="highvalue">고액 거래 관리</button>
+        <button class="nav-item" data-target="hometax">홈택스 업로드 체크</button>
+        <button class="nav-item" data-target="audit">외부감사 연계</button>
+        <button class="nav-item" data-target="ratio">80% 의무 사용</button>
+        <button class="nav-item" data-target="board">임원 등기 관리</button>
+        <button class="nav-item" data-target="calendar">컴플라이언스 캘린더</button>
+        <button class="nav-item" data-target="kb">실무 지식베이스</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-chip" id="userChip">로그인 필요</div>
+        <button class="ghost" id="logoutBtn">로그아웃</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="org-select">
+            <label for="orgSelect">법인</label>
+            <select id="orgSelect"></select>
+            <button class="ghost" id="addOrgBtn">새 법인</button>
+          </div>
+          <div class="status-pill" id="orgStatus">선택된 법인 없음</div>
+        </div>
+        <div class="topbar-right">
+          <div class="today" id="today"></div>
+          <button class="primary" id="openTaskBtn">새 태스크</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="panel is-active">
+        <div class="panel-header">
+          <h1>운영 대시보드</h1>
+          <p>연간 핵심 리스크를 한 화면에서 모니터링합니다.</p>
+        </div>
+        <div class="grid cols-3">
+          <div class="card highlight">
+            <h3>지출 분류 정확도</h3>
+            <div class="metric" id="metricMapping">0%</div>
+            <p class="muted">필수 항목 누락, 분류 오류 여부</p>
+          </div>
+          <div class="card">
+            <h3>80% 사용률</h3>
+            <div class="metric" id="metricRatio">0%</div>
+            <p class="muted">운용소득 대비 사용 실적</p>
+          </div>
+          <div class="card">
+            <h3>임원 등기 지연</h3>
+            <div class="metric" id="metricBoard">0건</div>
+            <p class="muted">기한 임박 또는 지연 건수</p>
+          </div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>이번 달 태스크</h3>
+            <div id="taskList"></div>
+          </div>
+          <div class="card">
+            <h3>리스크 알림</h3>
+            <ul class="list" id="riskList"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="orgs" class="panel">
+        <div class="panel-header">
+          <h1>법인 정보 관리</h1>
+          <p>CMS형 운영을 위해 법인별 기본정보와 회계 연도를 관리합니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>법인 기본정보</h3>
+            <form id="orgForm" class="form">
+              <label>법인명<input name="name" required /></label>
+              <label>사업자등록번호<input name="regNo" placeholder="000-00-00000" /></label>
+              <label>회계연도 시작월<input name="yearStartMonth" type="number" min="1" max="12" /></label>
+              <label>담당자<input name="contact" /></label>
+              <button class="primary" type="submit">저장</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3>법인 리스트</h3>
+            <div id="orgList"></div>
+          </div>
+          <div class="card">
+            <h3>구성원 & 역할</h3>
+            <form id="memberForm" class="form">
+              <label>구성원 이메일<input name="email" type="email" required /></label>
+              <label>역할
+                <select name="role">
+                  <option value="admin">관리자</option>
+                  <option value="manager">실무자</option>
+                  <option value="viewer">열람자</option>
+                </select>
+              </label>
+              <button class="primary" type="submit">구성원 추가</button>
+            </form>
+            <div id="memberList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="expenses" class="panel">
+        <div class="panel-header">
+          <h1>지출 3단계 분류 & 매핑</h1>
+          <p>출연재산 보고서 작성을 위해 지출 성격을 정확히 분류하고 필수 항목을 누락 없이 기록합니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>지출 입력</h3>
+            <form id="expenseForm" class="form">
+              <label>지출일자<input type="date" name="date" required /></label>
+              <label>금액<input type="number" name="amount" required /></label>
+              <label>지출 분류
+                <select name="category" required>
+                  <option value="지원">수혜자(단체) 지원</option>
+                  <option value="자산">자산 취득</option>
+                  <option value="운영">운영 경비</option>
+                </select>
+              </label>
+              <label>세부 목적<input name="subCategory" placeholder="장학금, 연구비, 임차료 등" /></label>
+              <label>지급처/수혜자명<input name="payeeName" required /></label>
+              <label>고유식별번호<input name="payeeId" placeholder="주민/사업자 번호" /></label>
+              <label>설명<input name="description" /></label>
+              <label class="checkbox"><input type="checkbox" name="isAsset" /> 자산 취득 상세 입력</label>
+              <label>자산 유형<input name="assetType" placeholder="토지, 건물, 장비 등" /></label>
+              <button class="primary" type="submit">지출 저장</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3>필수 항목 체크</h3>
+            <ul class="list">
+              <li>수혜자 지원 지출은 고유식별정보 필수</li>
+              <li>고유목적사업비와 수익사업 지출 분리</li>
+              <li>운용소득 계산서 '13. 고유목적사업지출'과 합계 일치</li>
+              <li>지출 성격에 따라 3대 분류 정확 매핑</li>
+            </ul>
+            <div id="expenseList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="highvalue" class="panel">
+        <div class="panel-header">
+          <h1>고액 거래 (100만원 이상)</h1>
+          <p>연간 100만원 이상 지급된 수혜자 또는 자산 취득 내역을 별도 관리합니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>자동 태깅 규칙</h3>
+            <p class="muted">100만원 이상 금액 입력 시 자동으로 고액 거래로 태깅됩니다.</p>
+            <ul class="list">
+              <li>결산기 전수조사 방지</li>
+              <li>수혜자 및 자산 내역 분리 출력</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>고액 거래 리스트</h3>
+            <div id="highValueList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="hometax" class="panel">
+        <div class="panel-header">
+          <h1>홈택스 전자신고 검증 체크</h1>
+          <p>엑셀 업로드 검증 로직을 반영한 사전 점검 도구입니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>엑셀 업로드 규칙</h3>
+            <ul class="list">
+              <li>표준 서식의 행/열/병합 변경 금지</li>
+              <li>오류 발생 시 엑셀 원본 수정 후 재업로드</li>
+              <li>사업자번호 유효성 및 합계 일치 확인</li>
+              <li>토지/건물 출연은 직접 입력만 가능</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>업로드 전 점검</h3>
+            <form id="uploadCheckForm" class="form">
+              <label class="checkbox"><input type="checkbox" name="format" /> 서식 변경 없음</label>
+              <label class="checkbox"><input type="checkbox" name="sum" /> 합계 금액 일치</label>
+              <label class="checkbox"><input type="checkbox" name="ids" /> 고유식별번호 모두 입력</label>
+              <label class="checkbox"><input type="checkbox" name="realEstate" /> 토지/건물 직접 입력 처리</label>
+              <label>메모<input name="note" /></label>
+              <button class="primary" type="submit">체크 저장</button>
+            </form>
+            <div class="divider"></div>
+            <form id="excelUploadForm" class="form">
+              <label>엑셀 업로드<input type="file" name="excel" accept=".xlsx,.xls" required /></label>
+              <label class="checkbox"><input type="checkbox" name="autoImport" /> 지출로 자동 등록</label>
+              <button class="ghost" type="submit">엑셀 불러오기</button>
+            </form>
+            <div id="uploadLog"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="audit" class="panel">
+        <div class="panel-header">
+          <h1>외부회계감사 보고서 연계</h1>
+          <p>감사보고서 첨부 여부와 부채 재분류 오류를 방지합니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>감사 첨부 체크</h3>
+            <form id="auditForm" class="form">
+              <label class="checkbox"><input type="checkbox" name="required" /> 외부감사 대상임</label>
+              <label class="checkbox"><input type="checkbox" name="attached" /> 감사보고서 첨부 완료</label>
+              <label>부채 재분류 메모<input name="debtNote" /></label>
+              <button class="primary" type="submit">저장</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3>리스크 포인트</h3>
+            <ul class="list">
+              <li>단기차입금/장기차입금 분류 오류 방지</li>
+              <li>미지급금/예수금 누락 여부 확인</li>
+              <li>재공시 시 기존 첨부파일 누락 금지</li>
+            </ul>
+            <div id="auditLog"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="ratio" class="panel">
+        <div class="panel-header">
+          <h1>운용소득 80% 의무 사용</h1>
+          <p>운용소득 산정과 사용 실적을 계산하여 미달 리스크를 조기에 경고합니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>운용소득 계산</h3>
+            <form id="ratioForm" class="form">
+              <label>수익사업 소득<input type="number" name="bizIncome" value="0" /></label>
+              <label>준비금 환입액<input type="number" name="reserveReturn" value="0" /></label>
+              <label>분리과세 이자<input type="number" name="separateInterest" value="0" /></label>
+              <label>법인세/지방세<input type="number" name="tax" value="0" /></label>
+              <label>이월결손금<input type="number" name="loss" value="0" /></label>
+              <label>사용 실적<input type="number" name="used" value="0" /></label>
+              <button class="primary" type="submit">계산</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3>계산 결과</h3>
+            <div class="metric" id="ratioResult">0%</div>
+            <div id="ratioDetail" class="muted"></div>
+            <ul class="list">
+              <li>고유목적사업비, 인건비, 목적사업용 자산취득 인정</li>
+              <li>단순 재투자, 임대보증금 반환은 사용 실적 제외</li>
+              <li>5년 평균 기준 활용 가능</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="board" class="panel">
+        <div class="panel-header">
+          <h1>임원 변경 등기 관리</h1>
+          <p>기산점 계산과 기한 내 등기를 위한 일정 관리를 지원합니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>임원 변경 입력</h3>
+            <form id="boardForm" class="form">
+              <label>임원명<input name="name" required /></label>
+              <label>변경 유형
+                <select name="type">
+                  <option value="임기만료">임기 만료</option>
+                  <option value="중임">중임</option>
+                  <option value="사임">사임</option>
+                  <option value="신규선임">신규 선임</option>
+                  <option value="해임">해임</option>
+                </select>
+              </label>
+              <label>효력 발생일<input type="date" name="effectiveDate" required /></label>
+              <label>기한 기준
+                <select name="deadlineRule">
+                  <option value="14">14일(실무 권장)</option>
+                  <option value="21">21일(민법 원칙)</option>
+                </select>
+              </label>
+              <button class="primary" type="submit">등록</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3>등기 기한 리스트</h3>
+            <div id="boardList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="calendar" class="panel">
+        <div class="panel-header">
+          <h1>컴플라이언스 캘린더</h1>
+          <p>업무 마감일을 한눈에 관리하고 알림을 생성합니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>태스크 등록</h3>
+            <form id="taskForm" class="form">
+              <label>태스크명<input name="title" required /></label>
+              <label>카테고리<input name="category" placeholder="출연재산, 80%, 등기" /></label>
+              <label>마감일<input type="date" name="dueDate" required /></label>
+              <button class="primary" type="submit">등록</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3>태스크 리스트</h3>
+            <div id="calendarList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="kb" class="panel">
+        <div class="panel-header">
+          <h1>실무 지식베이스</h1>
+          <p>핵심 개념을 요약하고 현장 오류를 줄이는 지침을 제공합니다.</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>출연재산 보고 핵심</h3>
+            <ul class="list">
+              <li>지출 3분류 정확 매핑이 제출 성패 좌우</li>
+              <li>고유목적사업비와 수익사업 지출 혼동 방지</li>
+              <li>100만원 이상 거래 별도 구분 의무</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>운용소득 80% 의무</h3>
+            <ul class="list">
+              <li>운용소득 산정 시 분리과세 이자 포함</li>
+              <li>사용 실적 인정 항목과 제외 항목 구분</li>
+              <li>미달 시 10% 가산세 및 주식 보유 제한 리스크</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>임원 등기 기산점</h3>
+            <ul class="list">
+              <li>초일불산입 원칙: 다음 날부터 1일</li>
+              <li>정관의 임기 연장 조항은 자동 연장 아님</li>
+              <li>서류 날짜 간 정합성 확보</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>체크리스트 다운로드</h3>
+            <p class="muted">내부용 체크리스트를 템플릿으로 저장하세요.</p>
+            <button class="ghost" id="exportBtn">요약 JSON 내보내기</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="loginModal" class="modal is-active">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>운영진 로그인</h2>
+        <p class="muted">Firebase Authentication 기반으로 로그인합니다.</p>
+      </div>
+      <form id="loginForm" class="form">
+        <label>이메일<input name="email" type="email" required /></label>
+        <label>비밀번호<input name="password" type="password" required /></label>
+        <button class="primary" type="submit">로그인</button>
+      </form>
+      <div class="divider"></div>
+      <form id="signupForm" class="form">
+        <label>이름<input name="name" required /></label>
+        <label>이메일<input name="email" type="email" required /></label>
+        <label>비밀번호<input name="password" type="password" required /></label>
+        <button class="ghost" type="submit">계정 생성</button>
+      </form>
+      <div class="divider"></div>
+      <div class="form">
+        <label>Firebase 설정</label>
+        <textarea id="firebaseConfig" rows="6" placeholder="firebaseConfig 객체를 붙여넣기"></textarea>
+        <button class="ghost" id="applyFirebaseBtn" type="button">설정 적용</button>
+        <p class="muted">설정은 로컬스토리지에 저장됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script type="module" src="/main.js"></script>
 </body>
 </html>
