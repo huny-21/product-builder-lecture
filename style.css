@@ -297,6 +297,10 @@ body {
   display: flex;
 }
 
+#loginModal {
+  display: none !important;
+}
+
 .modal-card {
   background: var(--panel);
   padding: 26px;

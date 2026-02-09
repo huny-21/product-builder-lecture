@@ -23,6 +23,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const firebaseConfigKey = 'pi_firebase_config';
+const AUTH_DISABLED = true;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -72,6 +73,20 @@ function setToday() {
 
 function showLoginModal(show) {
   $('#loginModal').classList.toggle('is-active', show);
+}
+
+function applyAuthDisabledUI() {
+  if (!AUTH_DISABLED) return;
+  const loginForm = $('#loginForm');
+  const signupForm = $('#signupForm');
+  if (loginForm) loginForm.style.display = 'none';
+  if (signupForm) signupForm.style.display = 'none';
+  const logoutBtn = $('#logoutBtn');
+  if (logoutBtn) logoutBtn.style.display = 'none';
+  const header = $('#loginModal .modal-header h2');
+  const desc = $('#loginModal .modal-header .muted');
+  if (header) header.textContent = 'Firebase 설정';
+  if (desc) desc.textContent = '로그인 서비스가 비활성화되어 있습니다.';
 }
 
 function setActivePanel(target) {
@@ -467,10 +482,13 @@ async function loadOrgData() {
     renderAll();
     return;
   }
-
-  const memberDocId = `${state.currentOrgId}_${state.user.uid}`;
-  const memberSnap = await getDoc(doc(state.db, 'orgMembers', memberDocId));
-  state.currentOrgRole = memberSnap.exists() ? memberSnap.data().role : null;
+  if (AUTH_DISABLED) {
+    state.currentOrgRole = 'admin';
+  } else {
+    const memberDocId = `${state.currentOrgId}_${state.user.uid}`;
+    const memberSnap = await getDoc(doc(state.db, 'orgMembers', memberDocId));
+    state.currentOrgRole = memberSnap.exists() ? memberSnap.data().role : null;
+  }
 
   state.expenses = await fetchCollection('expenses');
   state.uploads = await fetchCollection('uploads');
@@ -504,6 +522,16 @@ async function fetchMembers() {
 
 async function loadUserOrgs() {
   if (!state.user) return;
+  if (AUTH_DISABLED) {
+    const snap = await getDocs(query(collection(state.db, 'orgs'), orderBy('createdAt', 'asc')));
+    state.orgs = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+    if (!state.currentOrgId && state.orgs.length > 0) {
+      state.currentOrgId = state.orgs[0].id;
+      localStorage.setItem('pi_current_org', state.currentOrgId);
+    }
+    await loadOrgData();
+    return;
+  }
   const q = query(collection(state.db, 'orgMembers'), where('uid', '==', state.user.uid));
   const snap = await getDocs(q);
   const orgIds = snap.docs.map((docSnap) => docSnap.data().orgId);
@@ -601,7 +629,7 @@ function initFirebase() {
     return false;
   }
   state.app = initializeApp(state.firebaseConfig);
-  state.auth = getAuth(state.app);
+  state.auth = AUTH_DISABLED ? null : getAuth(state.app);
   state.db = getFirestore(state.app);
   return true;
 }
@@ -880,6 +908,7 @@ $('#openTaskBtn').addEventListener('click', () => {
 });
 
 $('#logoutBtn').addEventListener('click', async () => {
+  if (AUTH_DISABLED) return;
   if (state.auth) {
     await signOut(state.auth);
   }
@@ -887,6 +916,7 @@ $('#logoutBtn').addEventListener('click', async () => {
 
 $('#loginForm').addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (AUTH_DISABLED) return;
   const form = event.target;
   try {
     await signInWithEmailAndPassword(state.auth, form.email.value.trim(), form.password.value.trim());
@@ -898,6 +928,7 @@ $('#loginForm').addEventListener('submit', async (event) => {
 
 $('#signupForm').addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (AUTH_DISABLED) return;
   const form = event.target;
   try {
     const credential = await createUserWithEmailAndPassword(state.auth, form.email.value.trim(), form.password.value.trim());
@@ -962,8 +993,17 @@ function initAuthListener() {
 
 function init() {
   setToday();
+  applyAuthDisabledUI();
   const ok = initFirebase();
   if (!ok) return;
+  if (AUTH_DISABLED) {
+    state.user = { uid: 'guest', email: 'guest@local', displayName: '게스트' };
+    state.userProfile = { name: '게스트', email: 'guest@local', role: 'admin' };
+    setUserChip();
+    showLoginModal(false);
+    ensureUserProfile(state.user, '게스트').then(() => loadUserOrgs());
+    return;
+  }
   initAuthListener();
 }
 

@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberRole(orgId) {
+      return get(/databases/$(database)/documents/orgMembers/$(orgId + '_' + request.auth.uid)).data.role;
+    }
+
+    function isMember(orgId) {
+      return signedIn() && exists(/databases/$(database)/documents/orgMembers/$(orgId + '_' + request.auth.uid));
+    }
+
+    function isAdmin(orgId) {
+      return isMember(orgId) && memberRole(orgId) == 'admin';
+    }
+
+    function canEdit(orgId) {
+      return isMember(orgId) && (memberRole(orgId) == 'admin' || memberRole(orgId) == 'manager');
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow update: if signedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    match /orgs/{orgId} {
+      allow read: if isMember(orgId);
+      allow create: if signedIn();
+      allow update, delete: if isAdmin(orgId);
+    }
+
+    match /orgMembers/{memberId} {
+      allow read: if signedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin(resource.data.orgId)
+      );
+      allow create: if signedIn() && isAdmin(request.resource.data.orgId);
+      allow update, delete: if signedIn() && isAdmin(resource.data.orgId);
+    }
+
+    match /expenses/{docId} {
+      allow read: if isMember(resource.data.orgId);
+      allow create: if canEdit(request.resource.data.orgId);
+      allow update, delete: if isAdmin(resource.data.orgId);
+    }
+
+    match /uploads/{docId} {
+      allow read: if isMember(resource.data.orgId);
+      allow create: if canEdit(request.resource.data.orgId);
+      allow update, delete: if isAdmin(resource.data.orgId);
+    }
+
+    match /audits/{docId} {
+      allow read: if isMember(resource.data.orgId);
+      allow create: if canEdit(request.resource.data.orgId);
+      allow update, delete: if isAdmin(resource.data.orgId);
+    }
+
+    match /ratios/{docId} {
+      allow read: if isMember(resource.data.orgId);
+      allow create: if canEdit(request.resource.data.orgId);
+      allow update, delete: if isAdmin(resource.data.orgId);
+    }
+
+    match /boards/{docId} {
+      allow read: if isMember(resource.data.orgId);
+      allow create: if canEdit(request.resource.data.orgId);
+      allow update, delete: if isAdmin(resource.data.orgId);
+    }
+
+    match /tasks/{docId} {
+      allow read: if isMember(resource.data.orgId);
+      allow create: if canEdit(request.resource.data.orgId);
+      allow update, delete: if isAdmin(resource.data.orgId);
+    }
+  }
+}
